@@ -11,21 +11,21 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const agent = new Agent({
-    connections: 3, // Matches your exact number of concurrent requests
-    keepAliveTimeout: 2000, // 2 seconds (matches typical API response times)
-    keepAliveMaxTimeout: 10_000, // 10 seconds (prevents hanging connections)
+    connections: 3,
+    keepAliveTimeout: 2000,
+    keepAliveMaxTimeout: 10_000,
     connect: {
-        autoSelectFamily: true, // Enables IPv4/IPv6 dual-stack for faster DNS resolution
-        autoSelectFamilyAttemptTimeout: 100, // 100ms for IP family selection
-        maxCachedSessions: 3, // Matches connection pool size
+        autoSelectFamily: true,
+        autoSelectFamilyAttemptTimeout: 100,
+        maxCachedSessions: 3,
         tls: {
-            servername: 'api.jup.ag', // Ensures correct SNI for Jupiter API
-            rejectUnauthorized: true, // Ensures secure TLS (default, but explicit for clarity)
+            servername: 'api.jup.ag',
+            rejectUnauthorized: true,
         },
     },
     headers: {
-        'accept-encoding': 'br, gzip, deflate', // Enables response compression
-        'connection': 'keep-alive', // Explicitly enables keep-alive (reduces handshake overhead)
+        'accept-encoding': 'br, gzip, deflate',
+        'connection': 'keep-alive',
     },
 });
 
