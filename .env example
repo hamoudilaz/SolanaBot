@@ -1,0 +1,24 @@
+PRIVATE_KEY = YOUR BASE58 ENCODED PRIVATE KEY
+
+# FOR COPY TRADING
+
+PRIVATE_KEY_2 = YOUR PRIVATE KEY THAT WILL COPY TRADE
+SMART_WALLET = PUBLIC KEY OF THE WALLET TO COPY
+RPC_URL = YOUR RPC ENDPOINT
+WSS_URL = YOUR WEBSOCKET ENDPOINT
+
+# DO NOT TOUCH
+
+JUP_QUOTE = https://api.jup.ag/swap/v1/quote
+JUP_SWAP = https://api.jup.ag/swap/v1/swap
+JITO_RPC = https://frankfurt.mainnet.block-engine.jito.wtf/api/v1/transactions
+
+# Frankfurt is closest to me in sweden but you can use endpoints that might be closer to you:
+
+# https://amsterdam.mainnet.block-engine.jito.wtf/api/v1/transactions
+
+# https://ny.mainnet.block-engine.jito.wtf/api/v1/transactions
+
+# https://tokyo.mainnet.block-engine.jito.wtf/api/v1/transactions
+
+# https://slc.mainnet.block-engine.jito.wtf/api/v1/transactions

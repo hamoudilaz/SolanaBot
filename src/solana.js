@@ -1,5 +1,5 @@
 import Fastify from "fastify";
-import { wallet, getATA, connection } from "../panel.js";
+import { wallet, getATA, connection } from "./panel.js";
 import { VersionedTransaction } from "@solana/web3.js";
 
 const fastify = Fastify({ logger: false });
@@ -75,6 +75,7 @@ fastify.post("/buy", async (request, reply) => {
             skipPreflight: true,
         });
 
+        const confirmation = await connection.confirmTransaction({ signature, }, "processed");
 
         if (confirmation.value.err) {
             throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}\nhttps://solscan.io/tx/${signature}/`);

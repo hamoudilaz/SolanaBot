@@ -1,64 +1,105 @@
-import { VersionedTransaction, ComputeBudgetProgram } from "@solana/web3.js";
-import { getATA, wallet, SlippageBps, jitoTip, prioFee } from "../panel.js";
-import Fastify from "fastify";
-
+import { VersionedTransaction, ComputeBudgetProgram, PublicKey, } from '@solana/web3.js';
+import { wallet, SlippageBps, jitoTip, prioFee, getBalance } from '../panel.js';
+import Fastify from 'fastify';
+import { Agent, request as undiciRequest } from 'undici';
+import { getAssociatedTokenAddressSync } from '@solana/spl-token';
+import dotenv from 'dotenv';
+dotenv.config();
 const fastify = Fastify({ logger: false });
 
-const JITO_RPC =
-  "https://frankfurt.mainnet.block-engine.jito.wtf/api/v1/transactions";
+// AGENT CONFIG SETTINGS
+const agent = new Agent({
+  connections: 3, // Matches your exact number of concurrent requests
+  keepAliveTimeout: 2000, // 2 seconds (matches typical API response times)
+  keepAliveMaxTimeout: 10_000, // 10 seconds (prevents hanging connections)
+  connect: {
+    autoSelectFamily: true, // Enables IPv4/IPv6 dual-stack for faster DNS resolution
+    autoSelectFamilyAttemptTimeout: 100, // 100ms for IP family selection
+    maxCachedSessions: 3, // Matches connection pool size
+    tls: {
+      servername: 'api.jup.ag', // Ensures correct SNI for Jupiter API
+      rejectUnauthorized: true, // Ensures secure TLS (default, but explicit for clarity)
+    },
+  },
+  headers: {
+    'accept-encoding': 'br, gzip, deflate', // Enables response compression
+    'connection': 'keep-alive', // Explicitly enables keep-alive (reduces handshake overhead)
+  },
+});
 
-const quoteApi = "https://api.jup.ag/swap/v1/quote";
+// API's
+const quoteApi = process.env.JUP_QUOTE
+const swapApi = process.env.JUP_SWAP
+const JITO_RPC = process.env.JITO_RPC
 
-const inputMint = "So11111111111111111111111111111111111111112";
 
+// SOL MINT
+const inputMint = 'So11111111111111111111111111111111111111112';
 
-fastify.post("/buy", async (request, reply) => {
-
-  const start = Date.now();
+fastify.post('/buy', async (request, reply) => {
   const { outputMint, amount } = request.body;
-  const ATA = getATA(outputMint);
+
+  console.log("Transaction request recieved");
 
   if (!outputMint || !amount) {
-    return reply.status(400).send({ error: "Missing outputMint or amount" });
+    return reply.status(400).send({ error: 'Missing outputMint or amount' });
   }
+
+  const start = Date.now();
+
+  const ATA = getAssociatedTokenAddressSync(
+    new PublicKey(outputMint),
+    wallet.publicKey
+  );
+
+
+
+  // Ignore, just for testing
+  // let amountToSell = Math.floor(await getBalance(outputMint));
+  // console.log(Math.floor(amountToSell))
+
   try {
-    console.log("Fetching quote...");
+    const url = `${quoteApi}?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount * 1e9}&slippageBps=${SlippageBps}&onlyDirectRoutes=true`;
 
-    const quoteResponse = await fetch(
-      `${quoteApi}?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount * 1e9}&slippageBps=${SlippageBps}`
-    );
-    const quote = await quoteResponse.json();
+    console.log('Requesting quote...');
 
-    console.log("Requesting swap transaction...");
+    const { body: quoteRes } = await undiciRequest(url, { dispatcher: agent });
+
+    const quote = await quoteRes.json();
+
+    if (quote.error) {
+      console.error('Error getting quote:', quote.error);
+      return reply.status(400).send({ error: quote.error })
+    }
+    console.log('Quote received, requesting swap transaction...');
+
+
 
 
     // The good thing about this bot is that we will get our ATA before even buying through getATA function.
     // This lets us set the destinationTokenAccount and skipUserAccountsRpcCalls to true in the swap request. This will save us some time and RPC calls.
-    const swapResponse = await fetch("https://api.jup.ag/swap/v1/swap", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+
+    const { body: swapRes } = await undiciRequest(swapApi, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userPublicKey: wallet.publicKey.toBase58(),
         prioritizationFeeLamports: { jitoTipLamports: jitoTip },
         dynamicComputeUnitLimit: true,
         quoteResponse: quote,
-        // wrapAndUnwrapSol: false, Enable only if you have WSOL ready. You can swap SOL > WSOL at https://jup.ag/.
+        wrapAndUnwrapSol: false,
         skipUserAccountsRpcCalls: true,
         destinationTokenAccount: ATA.toBase58(),
       }),
+      dispatcher: agent,
     });
 
-    const swapData = await swapResponse.json();
+    const { swapTransaction } = await swapRes.json();
 
-    if (!swapData.swapTransaction) {
-      return reply.status(500).send({ error: "Failed to execute swap" });
-    }
-
-    console.log("Swap transaction received, signing...");
-
+    console.log('Swap transaction received, signing...');
 
     let transaction = VersionedTransaction.deserialize(
-      Buffer.from(swapData.swapTransaction, "base64")
+      Buffer.from(swapTransaction, 'base64')
     );
 
     let computeBudgetInstructionPrice =
@@ -79,60 +120,63 @@ fastify.post("/buy", async (request, reply) => {
       data: new Uint8Array(computeBudgetInstructionPrice.data),
     };
 
-    transaction.message.compiledInstructions.unshift(
+    transaction.message.compiledInstructions.splice(
+      1,
+      0,
       computeBudgetCompiledInstructionPrice
     );
 
     transaction.sign([wallet]);
 
-    const transactionBinary = transaction.serialize();
 
-    const transactionBase64 = Buffer.from(transactionBinary).toString("base64");
+    const transactionBase64 = Buffer.from(transaction.serialize()).toString('base64');
 
-    console.log("Transaction sent to jito...");
+    console.log(`Swapping ${amount} SOL for ${(quote.outAmount / 1000000).toFixed(3)} ${outputMint}`);
 
-    const sendResponse = await fetch(JITO_RPC, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    // THIS IS THE LAST STEP!
+    const { body: sendResponse } = await undiciRequest(JITO_RPC, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: 1,
-        jsonrpc: "2.0",
-        method: "sendTransaction",
+        jsonrpc: '2.0',
+        method: 'sendTransaction',
         params: [
           transactionBase64,
           {
-            encoding: "base64",
+            encoding: 'base64',
             skipPreflight: true,
-            preflightCommitment: "processed",
           },
         ],
       }),
+      dispatcher: agent,
     });
 
-
+    // JITO RETURNS OUR SOLSCAN TX ID.
 
     const sendResult = await sendResponse.json();
     const end = Date.now() - start;
 
-    console.log(`Transaction confirmed! TX: ${sendResult.result}`);
-    console.log("Overall time:" + end + "ms");
+    console.log(`Transaction confirmed: https://solscan.io/tx/${sendResult.result}`);
+    console.log('Overall time:' + end + 'ms');
     return reply.send({
-      message: "Swap executed successfully",
+      message: 'Swap executed successfully',
       outputMint,
       amount,
       expectedOutput: quote.outAmount,
       txId: `https://solscan.io/tx/${sendResult.result}`,
+      Time: end,
     });
   } catch (error) {
-    console.error("Error executing swap:", error);
-    return reply.status(500).send({ error: "Internal Server Error" });
+    console.error('Error executing swap:', error);
+    return reply.status(500).send({ error: 'Internal Server Error' });
   }
 });
 
 const start = async () => {
   try {
-    await fastify.listen({ port: 3000, host: "localhost" });
-    console.log("🚀 Server running on http://localhost:3000");
+    await fastify.listen({ port: 3000, host: 'localhost' });
+    console.log('🚀 Server running on http://localhost:3000');
   } catch (err) {
     console.error(err);
     process.exit(1);

@@ -1,25 +1,45 @@
-# 🚀 Solana Trading Bot (Work in Progress)
+### Note:
 
-This bot is still under development, but the **buy process is fully implemented!** 🎉
+#### This project is still a work in progress. I'm open to contributions and improvements. Feel free to fork the repository and submit a pull request! :)
 
-After spending **three days** researching and testing, I’ve successfully figured out how the system works and implemented the **most important instruction,** executing buy orders smoothly with priofee and jitotip.
+# 🔥 Solana Trading Bot (Work in Progress)
+
+This bot is still under development, but the buy process is implemented!
+
+After spending endless time researching and testing Ive successfully figured out how the system works and implemented the **most important instruction,** executing buy orders smoothly with priofee and jitotip.
+
+---
+
+# 🔥 UPDATE - March 6, 2025
+
+### ✅ **New Features & Improvements:**
+
+- **Copy Trading**: The bot can now mirror trades from a target wallet.
+- **40% Faster Buy Execution**: Switched to Undici’s fetch, allowing **optimized TCP/IP configurations** for speed.
+- **GraphQL Data Streaming (Experimental)**: Testing **GraphQL** for real-time updates.
+  <br>
+  <br>
+  Check the docs: [Copy trade section](copyTrial/README.md)
+
+---
 
 ## ✨ What Makes This Bot Special?
 
-**this one allows you to set both `jitoTip` and `prioFee` at the same time.** <br>
-**Its open source! Ive built this project as my hobby because i enjoy the process of learning and developing** <br>
-**This means that no extra fee of 1% is charged like other services have.** <br>
-**You dont need coding knowledge as all function logic and swap execution is already built by me.**
+✅ **Supports both `jitoTip` and `prioFee` simultaneously**.  
+✅ **Open-source and completely free**—no 1% fee like other services.  
+✅ **Beginner-friendly**—no coding knowledge required, everything is pre-built.
 
-### 🤔 isn’t that already supported by Jupiters swap API?
+### 🤔 Isn’t that already supported by Jupiter's Swap API?
 
-No, Even though Jupiters **API documentation** claims you can set both priofee and jitotip using `prioritizationFeeLamports`, that **does not work.**
+No! Even though Jupiter’s **API documentation** claims you can set both `prioFee` and `jitoTip` using `prioritizationFeeLamports`, that **does not work**.
 
-- **The truth:** Jupiters Swap API **only accepts one**—either `prioFee` or `jitoTip`.
-- **Even `/swap-instructions` does not allow both**—I confirmed this directly with Jupiters support.
-- **So how does this bot do it?** I found a workaround that lets both fees work together by manually decoding and adding the prioFee instruction into the transaction which solved the issue!
+- **The truth:** Jupiter’s Swap API **only accepts one**—either `prioFee` or `jitoTip`.
+- **Even `/swap-instructions` does not allow both**—I confirmed this directly with Jupiter’s support.
+- **So how does this bot do it?** I found a workaround that lets both fees work together by manually injecting the `prioFee` instruction into the transaction.
 
-## Getting Started
+---
+
+## 🚀 Getting Started
 
 1. Clone the repo:
    ```sh
@@ -31,11 +51,7 @@ No, Even though Jupiters **API documentation** claims you can set both priofee a
    ```sh
    npm install
    ```
-3. Create `.env` file root directory and add:
-   ```
-   PRIVATE_KEY=your-wallet-private-key
-   ```
-4. Run the bot:
+3. Run the bot to test server startup:
    ```sh
    npm start
    ```
@@ -44,7 +60,7 @@ No, Even though Jupiters **API documentation** claims you can set both priofee a
 
 ### Step 1: Add Your Private Key
 
-Create a `.env` file and add your private key:  
+Open `.env example` file and add your private key:  
 ⚠️ **Must be in bs58 format!** If your private key is Uint8Array like [323,53.....] use the `convert.js` script inside the helper folder to convert it like this:
 
 ```js
@@ -60,20 +76,22 @@ console.log("bs58 private key: " + converted); // Should return your private key
 
 ### Step 2: Load Your Private Key
 
-Navigate to solana.js
-Load the private key from the `.env` file:
+Navigate to panel.js  
+Load the private key from the `.env` fil e:
 
 ```js
+// run node panel.js to make sure it logs your publickey
+
 const privateKey = process.env.PRIVATE_KEY;
 
 const wallet = Keypair.fromSecretKey(bs58.decode(privateKey));
 
 const userPublicKey = wallet.publicKey.toBase58();
 
-console.log("Your PublicKey:" + userPublicKey); // Should return your wallet adress. If not recheck Step 1 and step 3 on "Getting started"
+console.log('Your PublicKey:' + userPublicKey); // Should return your wallet adress. If not recheck Step 1 and step 3 on "Getting started"
 ```
 
-### Step 4: RPC Connection
+### Step 4: WebSocket and RPC Connection
 
 Use **Mainnet RPC** or your **custom RPC URL**.  
 Navigate to your .env and add your RPC_URL:
@@ -95,16 +113,110 @@ console.log("Connected to RPC");
 ```
 
 > **Note:** This bot **does not require** an RPC connection since transactions are sent directly to **Jito**.
-
-> If you want to use your own RPC without sending the transaction to jito navigate to **src/solana.js**.
+> **Hovwever** If you want to experiment on the new copy trade feature you will need both **WebSocket and RPC endpoints**.
+> If you want to use your own RPC without sending the transaction to Jito navigate to **src/solana.js**. Not recommended because it is slow
 > Use this command to run solana.js:
 
 ```sh
-   node src/solana.js
+node src/solana.js
 ```
 
-## 🔧 Next Steps
+# How to Run the Bot
 
-This bot is still being developed, so expect improvements and new features soon.
+## 1️⃣ Start the Server
 
-Next commit will probably be a simple web interface with options panel and possibly sell option.
+Open the terminal and run:
+
+```sh
+npm start
+```
+
+This will start the server.
+
+---
+
+## 2️⃣ Make a POST Request to `/buy`
+
+Once the server is running, you can make a POST request to `http://localhost:3000/buy`.
+
+### 🔹 Example Request using `curl`:
+
+```sh
+curl -X POST "http://localhost:3000/buy" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "outputMint": "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6",
+           "amount": 0.00001
+         }'
+```
+
+### 🔹 Request Body Requirements:
+
+- `outputMint` → The Token CA (Contract Address) of the token you want to buy.
+- `amount` → The amount of SOL to use for the purchase.
+
+You can modify the **Token CA** and **amount** as needed.
+
+---
+
+Once the post request is sent, the bot will execute the trade in under 400MS and return our solscan txid link!
+
+---
+
+# Successful Transaction Execution
+
+## Running the Server
+
+To start the server, run the following command:
+
+```sh
+npm start
+```
+
+You should see the following output:
+
+```
+Server running on http://localhost:3000
+Your PublicKey: 7dGrdJRYtsNR8UYxZ3TnifXGjGc9eRYLq9sELwYpuuUu
+```
+
+## Executing a Transaction
+
+Once the server is running, send a `POST` request to execute a swap transaction.
+
+### Example Console Output for a Successful Transaction
+
+```
+Transaction request received
+Requesting quote...
+Quote received, Requesting swap transaction...
+Swap transaction received, signing...
+Swapping 0.00001 SOL for 7.075 TNSR
+Transaction confirmed: https://solscan.io/tx/524dLu3rdF2aRTCVZp9NZfaFacvyNPGqLhri8EEk2vzUTcdBbiT7beKw85zaaZbapX4cLGsUwxJQAVscGsDTrp3u
+Overall time: 229ms
+```
+
+### Example of an Error
+
+If an invalid token is used, an error message will be displayed in red:
+
+```diff
+- Error getting quote: The token EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1 is not tradable
+```
+
+<br>
+
+### 🔹 **Changes & Improvements**
+
+1. **Added a new copy trading feature** (`March 6, 2025`).
+2. **Speed and performance improvements**.
+3. **(BETA)** **GraphQL Testing for Wallet Monitor**
+4. **Reformatted for better readability and structure**.
+
+## Reference & docs:
+
+[Jupiter QUOTE API Reference](https://station.jup.ag/docs/api/quote) <br>
+[Jupiter SWAP API Reference](https://station.jup.ag/docs/api/swap)<br>
+[JitoLabs RPC docs](https://docs.jito.wtf/lowlatencytxnsend/#api)<br>
+[WebSocket Method Reference](https://solana.com/docs/rpc/websocket)<br>
+[GraphQL BitQuery Reference docs](https://docs.bitquery.io/docs/category/solana/)<br>
