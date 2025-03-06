@@ -10,18 +10,7 @@ After spending endless time researching and testing Ive successfully figured out
 
 ---
 
-# 🔥 UPDATE - March 6, 2025
 
-### ✅ **New Features & Improvements:**
-
-- **Copy Trading**: The bot can now mirror trades from a target wallet.
-- **40% Faster Buy Execution**: Switched to Undici’s fetch, allowing **optimized TCP/IP configurations** for speed.
-- **GraphQL Data Streaming (Experimental)**: Testing **GraphQL** for real-time updates.
-  <br>
-  <br>
-  Check the docs: [Copy trade section](copyTrial/README.md)
-
----
 
 ## ✨ What Makes This Bot Special?
 
