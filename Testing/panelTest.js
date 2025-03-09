@@ -7,8 +7,7 @@ dotenv.config();
 const SlippageBps = 340; // 34% slippage
 const jitoTip = 1000; // 0.00001 SOL
 const prioFee = 1000; // 0.00001 SOL
-
-
+const connection = new Connection(process.env.RPC_URL, 'processed');
 
 // Go to .env exampole file and add your private key (Must be bs58 encoded! if not use the convert.js script to convert it)
 const wallet = Keypair.fromSecretKey(bs58.decode(process.env.PRIVATE_KEY));
@@ -18,16 +17,7 @@ const userPublicKey = wallet.publicKey.toBase58();
 console.log('Your PublicKey: ' + userPublicKey);
 
 
-
-
-// iGNORE!, just for testing
-
-const connection = new Connection(process.env.RPC_URL, 'processed');
-
-
 async function getBalance(outputMint) {
-    console.log(outputMint);
-
     const getDecimal = await fetch(
         `https://api.jup.ag/tokens/v1/token/${outputMint}`
     );
@@ -43,8 +33,9 @@ async function getBalance(outputMint) {
         }
     );
 
-
-    const amountToSell = Math.floor(tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount)
+    const amountToSell = Math.floor(
+        tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount
+    );
     return { amountToSell, decimals };
 }
 

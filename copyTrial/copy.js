@@ -4,7 +4,6 @@ import {
     PublicKey,
 } from '@solana/web3.js';
 import { wallet, SlippageBps, jitoTip, prioFee } from './copypanel.js';
-
 import { Agent, request as undiciRequest } from 'undici';
 import { getAssociatedTokenAddressSync } from '@solana/spl-token';
 import dotenv from 'dotenv';
