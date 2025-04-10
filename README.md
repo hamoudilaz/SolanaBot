@@ -1,10 +1,12 @@
 ### Note:
 
-#### This project is still a work in progress. I'm open to contributions and improvements. Feel free to fork the repository and submit a pull request! :)
+#### CHECK OUT HORIZON-REACT
 
-# 🔥 Solana Trading Bot (Work in Progress)
+#### This project is in its final work phase. I'm open to contributions and improvements. Feel free to fork the repository and submit a pull request! :)
+#### The files have been hidden for privacy reasons. For access send me a msg in Telegram Horizon2221
+# 🔥 Solana Trading Bot (Project hidden)
 
-This bot is still under development, but the buy process is implemented!
+This bot is in its final development phase, the buy, sell, copytrade process is implemented!
 
 After spending endless time researching and testing Ive successfully figured out how the system works and implemented the **most important instruction,** executing buy orders smoothly with priofee and jitotip.
 
