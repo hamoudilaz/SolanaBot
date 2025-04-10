@@ -10,7 +10,7 @@ const fastify = Fastify({ logger: false });
 
 
 let SOL = 'So11111111111111111111111111111111111111112';
-let PDA = 'YOUR_PDA_ADDRESS';
+let PDA = 'D1FVpeP4uFBo9gxWD8eU6gfLDcAt6uYnQawVF71PykgF';
 
 function getATA(outputMint) {
     return getAssociatedTokenAddressSync(
@@ -22,25 +22,30 @@ function getATA(outputMint) {
 let inputMint;
 
 fastify.post('/swap', async (request, reply) => {
-    let { type, outputMint, amount } = request.body;
 
-    if (type === 'buy') {
-        inputMint = SOL;
-        const buyAmount = amount * 1e9;
-        const ATA = getATA(outputMint).toBase58();
-        const executeSwap = await swap(inputMint, outputMint, buyAmount, ATA);
-        return reply.send(`Transaction confirmed: https://solscan.io/tx/${executeSwap}`);
+    try {
+        let { type, outputMint, amount } = request.body;
+
+        if (type === 'buy') {
+            inputMint = SOL;
+            const buyAmount = amount * 1e9;
+            const ATA = getATA(outputMint).toBase58();
+            const executeSwap = await swap(inputMint, outputMint, buyAmount, ATA);
+            return reply.send(`Transaction confirmed: https://solscan.io/tx/${executeSwap}`);
+        }
+
+        if (type === 'sell') {
+            const { amountToSell, decimals } = await getBalance(outputMint);
+            const sellAmount = Math.floor((amountToSell * amount) / 100) * Math.pow(10, decimals);
+            inputMint = outputMint;
+            outputMint = SOL;
+            const executeSwap = await swap(inputMint, outputMint, sellAmount, PDA);
+            return reply.send(`Transaction confirmed: https://solscan.io/tx/${executeSwap}`);
+        }
+    } catch (err) {
+        console.error(err);
+        return reply.send(err)
     }
-
-    if (type === 'sell') {
-        const { amountToSell, decimals } = await getBalance(outputMint);
-        const sellAmount = Math.floor((amountToSell * amount) / 100) * Math.pow(10, decimals);
-        inputMint = outputMint;
-        outputMint = SOL;
-        const executeSwap = await swap(inputMint, outputMint, sellAmount, PDA);
-        return reply.send(`Transaction confirmed: https://solscan.io/tx/${executeSwap}`);
-    }
-
 });
 
 const start = async () => {

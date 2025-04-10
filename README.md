@@ -10,8 +10,6 @@ After spending endless time researching and testing Ive successfully figured out
 
 ---
 
-
-
 ## ✨ What Makes This Bot Special?
 
 ✅ **Supports both `jitoTip` and `prioFee` simultaneously**.  

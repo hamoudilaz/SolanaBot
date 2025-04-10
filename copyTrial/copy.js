@@ -41,7 +41,7 @@ export async function executeSwap(outputMint, inputMint, amount) {
     try {
         const start = Date.now();
 
-        const url = `${quoteApi}?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount * 1e9}&slippageBps=${SlippageBps}&onlyDirectRoutes=true`;
+        const url = `${quoteApi}?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount * 1e9}&slippageBps=${SlippageBps}`;
 
         const { body: quoteRes } = await undiciRequest(url, { dispatcher: agent });
 

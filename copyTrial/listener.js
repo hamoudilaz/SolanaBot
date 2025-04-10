@@ -9,6 +9,7 @@ const smart_wallet = process.env.smart_wallet;
 // Amount in SOL to swap on each copy trade
 const amount = 0.0001
 
+let side
 
 // Logic to extract the token mint from the transaction and execute swap
 async function tx(tx) {
@@ -17,6 +18,8 @@ async function tx(tx) {
     maxSupportedTransactionVersion: 0,
   });
 
+  console.log(info);
+  return
   const meta = info.meta;
 
   const netChanges = {};
@@ -43,11 +46,11 @@ async function tx(tx) {
   }
   console.log(`Swapping ${tokenMint} for SOL`);
 
-  const txid = await executeSwap(tokenMint, solMint, amount);
   console.log(txid);
   return;
 }
 
+const txid = await executeSwap(tokenMint, solMint, amount);
 
 
 ws.on('open', () => {
@@ -61,7 +64,7 @@ ws.on('open', () => {
         mentions: [smart_wallet],
       },
       {
-        commitment: 'confirmed', // 'processed' | 'confirmed',   // processed is faster but less reliable // optional
+        commitment: 'processed',
       },
     ],
   };

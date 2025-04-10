@@ -55,14 +55,14 @@ fastify.post('/buy', async (request, reply) => {
 
 
   // Ignore, just for testing
-  const { amountToSell, decimals } = await getBalance(outputMint)
-  const sell = Math.floor(amountToSell * 0.2);
+  // const { amountToSell, decimals } = await getBalance(outputMint)
+  // const sell = Math.floor(amountToSell * 0.2);
 
 
 
 
   try {
-    const url = `${quoteApi}?inputMint=${outputMint}&outputMint=${inputMint}&amount=${sell * Math.pow(10, decimals)}&slippageBps=${SlippageBps}&onlyDirectRoutes=true`;
+    const url = `${quoteApi}?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amount * 1e9}&slippageBps=${SlippageBps}&onlyDirectRoutes=true`;
 
     console.log('Requesting quote...');
 
@@ -92,7 +92,7 @@ fastify.post('/buy', async (request, reply) => {
         quoteResponse: quote,
         wrapAndUnwrapSol: false,
         skipUserAccountsRpcCalls: true,
-        destinationTokenAccount: "D1FVpeP4uFBo9gxWD8eU6gfLDcAt6uYnQawVF71PykgF"
+        destinationTokenAccount: ATA.toBase58(),
       }),
       dispatcher: agent,
     });
